@@ -18,9 +18,6 @@ app.add_middleware(
 
 GLOBAL = {}
 
-# -----------------------------
-# BUILD MODELS
-# -----------------------------
 @app.post("/build")
 async def build(
     transactions: UploadFile = File(...),
@@ -40,9 +37,6 @@ async def build(
 
     return {"message": "Models built successfully"}
 
-# -----------------------------
-# RECOMMEND
-# -----------------------------
 @app.get("/recommend")
 def recommend(item: str):
 
