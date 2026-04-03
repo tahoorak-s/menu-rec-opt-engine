@@ -21,7 +21,6 @@ app.add_middleware(
 
 GLOBAL = {}
 
-# 🔥 NEW USER STRUCTURE
 USERS = {
     "admin": {
         "password": "admin123",
@@ -31,9 +30,7 @@ USERS = {
     }
 }
 
-# -----------------------------
-# AUTH
-# -----------------------------
+#authorization function
 def get_current_user(authorization: str = Header(...)):
     if not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Invalid auth header")
@@ -46,9 +43,7 @@ def get_current_user(authorization: str = Header(...)):
 
     return payload
 
-# -----------------------------
-# REGISTER
-# -----------------------------
+#registration function
 @app.post("/register")
 async def register(username: str, password: str, role: str):
 
@@ -61,7 +56,6 @@ async def register(username: str, password: str, role: str):
     if username in USERS:
         raise HTTPException(status_code=400, detail="User already exists")
 
-    # 🔥 KEY LOGIC
     USERS[username] = {
         "password": password,
         "role": role,
@@ -71,9 +65,7 @@ async def register(username: str, password: str, role: str):
 
     return {"message": "User registered successfully"}
 
-# -----------------------------
-# LOGIN
-# -----------------------------
+#login function
 @app.post("/login")
 async def login(username: str, password: str):
 
@@ -85,7 +77,7 @@ async def login(username: str, password: str):
     if not user or user["password"] != password:
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    # 🔥 BLOCK UNAPPROVED WAITERS
+    #block the unapproved or pending waiters
     if user["role"] == "waiter" and user["status"] != "approved":
         raise HTTPException(status_code=403, detail="Waiter not approved yet")
 
@@ -99,9 +91,7 @@ async def login(username: str, password: str):
         "role": user["role"]
     }
 
-# -----------------------------
-# ADMIN: VIEW PENDING WAITERS
-# -----------------------------
+#view the pending waiters waiting to be approved. poor guys srsly what in the oligarchy is this
 @app.get("/pending-waiters")
 def get_pending_waiters(user=Depends(get_current_user)):
 
@@ -115,9 +105,7 @@ def get_pending_waiters(user=Depends(get_current_user)):
 
     return {"pending": pending}
 
-# -----------------------------
-# ADMIN: APPROVE WAITER
-# -----------------------------
+#ugh, admin, approve the waiters already. here, use this function
 @app.post("/approve-waiter")
 def approve_waiter(username: str, user=Depends(get_current_user)):
 
@@ -135,9 +123,7 @@ def approve_waiter(username: str, user=Depends(get_current_user)):
 
     return {"message": f"{username} approved"}
 
-# -----------------------------
-# BUILD MODELS (ADMIN ONLY)
-# -----------------------------
+#here we build the ML and MBA models which will be used for the recommendation engine
 @app.post("/build")
 async def build(
     transactions: UploadFile = File(...),
@@ -172,9 +158,7 @@ async def build(
         "categories": categories
     }
 
-# -----------------------------
-# RECOMMEND
-# -----------------------------
+#recommendation engine
 @app.get("/recommend")
 def recommend(item: str, user=Depends(get_current_user)):
 

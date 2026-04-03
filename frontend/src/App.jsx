@@ -17,9 +17,7 @@ function App() {
 
   const [pending, setPending] = useState([]);
 
-  // -----------------------------
-  // REGISTER
-  // -----------------------------
+  //registration
   const register = async () => {
     if (!username || !password) {
       alert("Enter all fields");
@@ -44,9 +42,7 @@ function App() {
     }
   };
 
-  // -----------------------------
-  // LOGIN
-  // -----------------------------
+  //login
   const login = async () => {
     if (!username || !password) {
       alert("Enter username and password");
@@ -67,9 +63,7 @@ function App() {
     }
   };
 
-  // -----------------------------
-  // LOGOUT
-  // -----------------------------
+  //logout
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
@@ -83,9 +77,7 @@ function App() {
     setPending([]);
   };
 
-  // -----------------------------
-  // BUILD MODELS
-  // -----------------------------
+  //building the ml models
   const build = async () => {
     if (!file1 || !file2) {
       alert("Upload both files first");
@@ -120,9 +112,7 @@ function App() {
     }
   };
 
-  // -----------------------------
-  // RECOMMEND
-  // -----------------------------
+  //recommendation engine
   const recommend = async () => {
     if (!item) {
       alert("Enter an item");
@@ -147,9 +137,7 @@ function App() {
     }
   };
 
-  // -----------------------------
-  // ADMIN: FETCH PENDING WAITERS
-  // -----------------------------
+  //fetch pending waiters for admin dashboard
   const fetchPending = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -169,9 +157,7 @@ function App() {
     }
   };
 
-  // -----------------------------
-  // ADMIN: APPROVE WAITER
-  // -----------------------------
+  //approve the waiters, admin.
   const approve = async (username) => {
     try {
       const token = localStorage.getItem("token");
@@ -193,9 +179,7 @@ function App() {
     }
   };
 
-  // -----------------------------
-  // LOGIN / REGISTER PAGE
-  // -----------------------------
+  //login/registration page
   if (!role) {
     return (
       <div style={{ textAlign: "center", marginTop: "100px" }}>
@@ -242,13 +226,11 @@ function App() {
     );
   }
 
-  // -----------------------------
-  // ADMIN DASHBOARD
-  // -----------------------------
+  //admin dashboard
   if (role === "admin") {
     return (
       <div style={{ padding: "30px" }}>
-        <h2>👨‍💼 Admin Dashboard</h2>
+        <h2>Admin Dashboard</h2>
 
         <button onClick={logout}>🚪 Logout</button>
 
@@ -268,7 +250,7 @@ function App() {
 
         {categories && (
           <div>
-            <h3>📊 Categories</h3>
+            <h3>Menu Engineering Quadrant Analysis</h3>
             {Object.entries(categories).map(([k, v]) => (
               <div key={k}>
                 <b>{k}</b>: {v.join(", ")}
@@ -279,7 +261,7 @@ function App() {
 
         <hr />
 
-        <h3>👨‍🍳 Pending Waiters</h3>
+        <h3>Pending Waiters</h3>
         <button onClick={fetchPending}>Load</button>
 
         {pending.map((w, i) => (
@@ -292,15 +274,13 @@ function App() {
     );
   }
 
-  // -----------------------------
-  // WAITER PANEL
-  // -----------------------------
+  //Waiter dashboard
   if (role === "waiter") {
     return (
       <div style={{ padding: "30px" }}>
-        <h2>👨‍🍳 Waiter Panel</h2>
+        <h2>Waiter Panel</h2>
 
-        <button onClick={logout}>🚪 Logout</button>
+        <button onClick={logout}>Logout</button>
 
         <br /><br />
 
@@ -328,4 +308,4 @@ function App() {
   }
 }
 
-export default App;
+export default App;cd
