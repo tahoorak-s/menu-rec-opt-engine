@@ -9,6 +9,31 @@ function App() {
   const [result, setResult] = useState(null);
   const [categories, setCategories] = useState(null); // 🔥 new
   const [loading, setLoading] = useState(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  
+  
+  const login = async () => {
+
+
+  if (!username || !password) {
+    alert("Enter username and password");
+    return;
+  }
+
+  try {
+    const res = await axios.post("http://localhost:8000/login", null, {
+      params: { username, password }
+    });
+
+    localStorage.setItem("token", res.data.access_token);
+    localStorage.setItem("role", res.data.role);
+
+    setRole(res.data.role);
+  } catch (err) {
+    alert("Invalid login");
+  }
+};
 
   // -----------------------------
   // BUILD MODELS
@@ -26,10 +51,13 @@ function App() {
     try {
       setLoading(true);
 
-      const res = await axios.post(
-        "http://localhost:8000/build",
-        formData
-      );
+      const token = localStorage.getItem("token");
+
+      const res = await axios.post("http://localhost:8000/build", formData, {
+                  headers: {
+                      Authorization: `Bearer ${token}`
+                  }
+                });
 
       setCategories(res.data.categories);
       alert("Models Built!");
@@ -51,8 +79,15 @@ function App() {
     }
 
     try {
+      const token = localStorage.getItem("token");
+
       const res = await axios.get(
-        `http://localhost:8000/recommend?item=${item}`
+        `http://localhost:8000/recommend?item=${item}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
       );
       setResult(res.data);
     } catch (err) {
@@ -61,25 +96,41 @@ function App() {
     }
   };
 
+  const logout = () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("role");
+  setRole(null);
+  setUsername("");
+  setPassword("");
+  setItem(""); 
+};
+
+
   // -----------------------------
   // ROLE SELECTION
   // -----------------------------
   if (!role) {
-    return (
-      <div style={{ textAlign: "center", marginTop: "100px" }}>
-        <h1>🍽 Restaurant AI System</h1>
-        <h2>Select Role</h2>
+  return (
+    <div>
+      <h2>Login</h2>
 
-        <button onClick={() => setRole("admin")}>
-          👨‍💼 Admin
-        </button>
+      <input
+        placeholder="Username"
+        value = {username}
+        onChange={(e) => setUsername(e.target.value)}
+      />
 
-        <button onClick={() => setRole("waiter")}>
-          👨‍🍳 Waiter
-        </button>
-      </div>
-    );
-  }
+      <input
+        type="password"
+        placeholder="Password"
+        value = {password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
+
+      <button onClick={login}>Login</button>
+    </div>
+  );
+}
 
   // -----------------------------
   // ADMIN DASHBOARD
@@ -130,9 +181,8 @@ function App() {
         )}
 
         <br />
-
-        <button onClick={() => setRole(null)}>
-          🔙 Back
+        <button onClick={logout}>
+          🚪 Logout
         </button>
       </div>
     );
@@ -149,6 +199,7 @@ function App() {
         <input
           type="text"
           placeholder="Enter item"
+          value = {item}
           onChange={(e) => setItem(e.target.value)}
         />
 
@@ -173,9 +224,8 @@ function App() {
         )}
 
         <br />
-
-        <button onClick={() => setRole(null)}>
-          🔙 Back
+        <button onClick={logout}>
+          🚪 Logout
         </button>
       </div>
     );
