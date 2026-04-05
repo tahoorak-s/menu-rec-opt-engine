@@ -8,6 +8,10 @@ from apriori_model import build_rules
 from hierarchical_model import build_hierarchy
 from hybrid_model import final_recommend
 from menu_eng import apply_menu_engineering
+from database import Base, engine, SessionLocal
+from models import User
+
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
@@ -21,14 +25,7 @@ app.add_middleware(
 
 GLOBAL = {}
 
-USERS = {
-    "admin": {
-        "password": "admin123",
-        "role": "admin",
-        "status": "approved",
-        "admin_id": None
-    }
-}
+USERS = {}
 
 #authorization function
 def get_current_user(authorization: str = Header(...)):
@@ -53,18 +50,27 @@ async def register(username: str, password: str, role: str):
     if role not in ["admin", "waiter"]:
         raise HTTPException(status_code=400, detail="Invalid role")
 
-    if username in USERS:
+    db = SessionLocal()
+
+    existing = db.query(User).filter(User.username == username).first()
+
+    if existing:
+        db.close()
         raise HTTPException(status_code=400, detail="User already exists")
 
-    USERS[username] = {
-        "password": password,
-        "role": role,
-        "status": "approved" if role == "admin" else "pending",
-        "admin_id": None
-    }
+    new_user = User(
+        username=username,
+        password=password,
+        role=role,
+        status="approved" if role == "admin" else "pending",
+        admin_id=None
+    )
+
+    db.add(new_user)
+    db.commit()
+    db.close()
 
     return {"message": "User registered successfully"}
-
 #login function
 @app.post("/login")
 async def login(username: str, password: str):
@@ -72,23 +78,28 @@ async def login(username: str, password: str):
     if not username or not password:
         raise HTTPException(status_code=400, detail="Username and password required")
 
-    user = USERS.get(username)
+    db = SessionLocal()
 
-    if not user or user["password"] != password:
+    user = db.query(User).filter(User.username == username).first()
+
+    if not user or user.password != password:
+        db.close()
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    #block the unapproved or pending waiters
-    if user["role"] == "waiter" and user["status"] != "approved":
+    if user.role == "waiter" and user.status != "approved":
+        db.close()
         raise HTTPException(status_code=403, detail="Waiter not approved yet")
 
     token = create_access_token({
-        "sub": username,
-        "role": user["role"]
+        "sub": user.username,
+        "role": user.role
     })
+
+    db.close()
 
     return {
         "access_token": token,
-        "role": user["role"]
+        "role": user.role
     }
 
 #view the pending waiters waiting to be approved. poor guys srsly what in the oligarchy is this
@@ -98,12 +109,18 @@ def get_pending_waiters(user=Depends(get_current_user)):
     if user["role"] != "admin":
         raise HTTPException(status_code=403, detail="Admins only")
 
-    pending = [
-        u for u, data in USERS.items()
-        if data["role"] == "waiter" and data["status"] == "pending"
-    ]
+    db = SessionLocal()
 
-    return {"pending": pending}
+    waiters = db.query(User).filter(
+        User.role == "waiter",
+        User.status == "pending"
+    ).all()
+
+    result = [w.username for w in waiters]
+
+    db.close()
+
+    return {"pending": result}
 
 #ugh, admin, approve the waiters already. here, use this function
 @app.post("/approve-waiter")
@@ -112,16 +129,25 @@ def approve_waiter(username: str, user=Depends(get_current_user)):
     if user["role"] != "admin":
         raise HTTPException(status_code=403, detail="Admins only")
 
-    if username not in USERS:
+    db = SessionLocal()
+
+    waiter = db.query(User).filter(User.username == username).first()
+
+    if not waiter:
+        db.close()
         raise HTTPException(status_code=404, detail="User not found")
 
-    if USERS[username]["role"] != "waiter":
+    if waiter.role != "waiter":
+        db.close()
         raise HTTPException(status_code=400, detail="Not a waiter")
 
-    USERS[username]["status"] = "approved"
-    USERS[username]["admin_id"] = user["sub"]
+    waiter.status = "approved"
+    waiter.admin_id = user["sub"]
 
-    return {"message": f"{username} approved"}
+    db.commit()
+    db.close()
+
+    return {"message": "Waiter approved"}
 
 #here we build the ML and MBA models which will be used for the recommendation engine
 @app.post("/build")
