@@ -11,7 +11,7 @@ def final_recommend(item, rules, hierarchy, item_lookup, item_stats):
     hier = recommend_hierarchical(item, hierarchy, item_lookup)
 
     if hier:
-        return hier, "Based on K means model"
+        return hier, "Based on menu engineering stats"
 
     fallback = item_stats.sort_values(
         by="Qty_Sold", ascending=False

@@ -9,6 +9,9 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import Select from "react-select";
+import "./App.css";
+
+const COLORS = ["#1f7a68", "#e15840", "#f4b942", "#5b6ee1"];
 
 function App() {
   const [role, setRole] = useState(localStorage.getItem("role"));
@@ -16,17 +19,16 @@ function App() {
   const [file2, setFile2] = useState(null);
   const [item, setItem] = useState("");
   const [result, setResult] = useState(null);
-  const [categories, setCategories] = useState(JSON.parse(localStorage.getItem("categories")) || null);
+  const [categories, setCategories] = useState(
+    JSON.parse(localStorage.getItem("categories")) || null
+  );
   const [loading, setLoading] = useState(false);
-
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isRegister, setIsRegister] = useState(false);
   const [regRole, setRegRole] = useState("waiter");
-
   const [pending, setPending] = useState([]);
 
-  //registration
   const register = async () => {
     if (!username || !password) {
       alert("Enter all fields");
@@ -35,11 +37,7 @@ function App() {
 
     try {
       await axios.post("http://localhost:8000/register", null, {
-        params: {
-          username,
-          password,
-          role: regRole
-        }
+        params: { username, password, role: regRole },
       });
 
       alert("Registered successfully!");
@@ -51,7 +49,6 @@ function App() {
     }
   };
 
-  //login
   const login = async () => {
     if (!username || !password) {
       alert("Enter username and password");
@@ -60,22 +57,19 @@ function App() {
 
     try {
       const res = await axios.post("http://localhost:8000/login", null, {
-        params: { username, password }
+        params: { username, password },
       });
 
       localStorage.setItem("token", res.data.access_token);
       localStorage.setItem("role", res.data.role);
-
       setRole(res.data.role);
     } catch (err) {
       alert(err.response?.data?.detail || "Invalid login");
     }
   };
 
-  //logout
   const logout = () => {
     localStorage.clear();
-
     setRole(null);
     setUsername("");
     setPassword("");
@@ -84,7 +78,6 @@ function App() {
     setPending([]);
   };
 
-  //building the ml models
   const build = async () => {
     if (!file1 || !file2) {
       alert("Upload both files first");
@@ -97,23 +90,13 @@ function App() {
 
     try {
       setLoading(true);
-
       const token = localStorage.getItem("token");
-      const res = await axios.post(
-        "http://localhost:8000/build",
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
+      const res = await axios.post("http://localhost:8000/build", formData, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       setCategories(res.data.categories);
-      localStorage.setItem(
-        "categories",
-        JSON.stringify(res.data.categories)
-      );
+      localStorage.setItem("categories", JSON.stringify(res.data.categories));
       alert("Models Built!");
     } catch (err) {
       alert(err.response?.data?.detail || "Error building models");
@@ -122,24 +105,17 @@ function App() {
     }
   };
 
-  //recommendation engine
   const recommend = async () => {
     if (!item) {
-      alert("Enter an item");
+      alert("Select an item");
       return;
     }
 
     try {
       const token = localStorage.getItem("token");
-
-      const res = await axios.get(
-        `http://localhost:8000/recommend?item=${item}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
+      const res = await axios.get(`http://localhost:8000/recommend?item=${item}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       setResult(res.data);
     } catch (err) {
@@ -147,19 +123,12 @@ function App() {
     }
   };
 
-  //fetch pending waiters for admin dashboard
   const fetchPending = async () => {
     try {
       const token = localStorage.getItem("token");
-
-      const res = await axios.get(
-        "http://localhost:8000/pending-waiters",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
+      const res = await axios.get("http://localhost:8000/pending-waiters", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       setPending(res.data.pending);
     } catch (err) {
@@ -167,21 +136,13 @@ function App() {
     }
   };
 
-  //approve the waiters, admin.
   const approve = async (username) => {
     try {
       const token = localStorage.getItem("token");
-
-      await axios.post(
-        "http://localhost:8000/approve-waiter",
-        null,
-        {
-          params: { username },
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
+      await axios.post("http://localhost:8000/approve-waiter", null, {
+        params: { username },
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       fetchPending();
     } catch (err) {
@@ -190,260 +151,277 @@ function App() {
   };
 
   const quadrantData = categories
-  ? Object.entries(categories).map(([key, value]) => ({
-      name: key,
-      value: value.length,
-    }))
-  : [];
-
-  const COLORS = ["#4CAF50", "#2196F3", "#FF9800", "#F44336"];
-
-  const itemOptions = categories
-  ? Object.entries(categories).flatMap(([quadrant, items]) =>
-      items.map((item) => ({
-        value: item,
-        label: item,
+    ? Object.entries(categories).map(([key, value]) => ({
+        name: key,
+        value: value.length,
       }))
-    )
-  : [];
+    : [];
 
-  //login/registration page
+  const menuOptions = categories
+    ? Object.entries(categories).flatMap(([quadrant, items]) =>
+        items.map((menuItem) => ({
+          value: menuItem,
+          label: menuItem,
+          quadrant,
+        }))
+      )
+    : [];
+
+  const selectStyles = {
+    control: (base, state) => ({
+      ...base,
+      minHeight: 56,
+      borderRadius: 16,
+      borderColor: state.isFocused ? "#1f7a68" : "rgba(22, 35, 46, 0.12)",
+      background: "rgba(255, 255, 255, 0.86)",
+      boxShadow: state.isFocused ? "0 0 0 4px rgba(31, 122, 104, 0.14)" : "none",
+      padding: "2px 6px",
+      transition: "all 180ms ease",
+    }),
+    menu: (base) => ({
+      ...base,
+      borderRadius: 16,
+      overflow: "hidden",
+      boxShadow: "0 20px 50px rgba(22, 35, 46, 0.16)",
+    }),
+    option: (base, state) => ({
+      ...base,
+      background: state.isFocused ? "rgba(31, 122, 104, 0.1)" : "white",
+      color: "#16232e",
+      padding: "12px 14px",
+    }),
+  };
+
   if (!role) {
     return (
-      <div style={{ textAlign: "center", marginTop: "100px" }}>
-        <h2>{isRegister ? "Register" : "Login"}</h2>
+      <main className="app-shell auth-shell">
+        <div className="ambient ambient-one" />
+        <div className="ambient ambient-two" />
 
-        <input
-          placeholder="Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-        />
-        <br /><br />
+        <section className="auth-card animate-in">
+          <div className="brand-mark">M</div>
+          <p className="eyebrow">Restaurant intelligence</p>
+          <h1>MenuMind</h1>
+          <p className="lede">
+            Build smarter menu decisions from sales data and serve better item
+            pairings in seconds.
+          </p>
 
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        <br /><br />
+          <div className="auth-form">
+            <input
+              className="text-input"
+              placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
+            <input
+              className="text-input"
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
 
-        {isRegister && (
-          <>
-            <select onChange={(e) => setRegRole(e.target.value)}>
-              <option value="waiter">Waiter</option>
-              <option value="admin">Admin</option>
-            </select>
-            <br /><br />
-          </>
-        )}
+            {isRegister && (
+              <select
+                className="text-input"
+                value={regRole}
+                onChange={(e) => setRegRole(e.target.value)}
+              >
+                <option value="waiter">Waiter</option>
+                <option value="admin">Admin</option>
+              </select>
+            )}
 
-        <button onClick={isRegister ? register : login}>
-          {isRegister ? "Register" : "Login"}
-        </button>
+            <button className="primary-button full-width" onClick={isRegister ? register : login}>
+              {isRegister ? "Create account" : "Sign in"}
+            </button>
+          </div>
 
-        <p
-          style={{ cursor: "pointer", color: "blue" }}
-          onClick={() => setIsRegister(!isRegister)}
-        >
-          {isRegister
-            ? "Already have an account? Login"
-            : "New user? Register"}
-        </p>
-      </div>
+          <button className="link-button" onClick={() => setIsRegister(!isRegister)}>
+            {isRegister ? "Already have an account? Sign in" : "New user? Create an account"}
+          </button>
+        </section>
+      </main>
     );
   }
 
-  //admin dashboard
   if (role === "admin") {
     return (
-      <div style={{ padding: "30px" }}>
-        <h2>Admin Dashboard</h2>
+      <main className="app-shell dashboard-shell">
+        <header className="topbar animate-in">
+          <div>
+            <p className="eyebrow">Admin dashboard</p>
+            <h1>Restaurant Intelligence</h1>
+            <p className="muted">Upload datasets, build models, and track menu performance.</p>
+          </div>
+          <button className="ghost-button" onClick={logout}>Logout</button>
+        </header>
 
-        <button onClick={logout}>🚪 Logout</button>
+        <section className="panel upload-panel animate-in delay-1">
+          <div>
+            <p className="eyebrow">Model builder</p>
+            <h2>Upload datasets</h2>
+            <p className="muted">Add transactions and item data to refresh recommendations.</p>
+          </div>
 
-        <hr />
+          <div className="upload-grid">
+            <label className="file-tile">
+              <span>Transactions file</span>
+              <strong>{file1?.name || "Choose CSV"}</strong>
+              <input type="file" onChange={(e) => setFile1(e.target.files[0])} />
+            </label>
+            <label className="file-tile">
+              <span>Items file</span>
+              <strong>{file2?.name || "Choose CSV"}</strong>
+              <input type="file" onChange={(e) => setFile2(e.target.files[0])} />
+            </label>
+          </div>
 
-        <h3>Upload Data</h3>
+          <button className="primary-button" onClick={build} disabled={loading}>
+            {loading ? "Building models..." : "Build models"}
+          </button>
+        </section>
 
-        <input type="file" onChange={(e) => setFile1(e.target.files[0])} />
-        <br /><br />
-
-        <input type="file" onChange={(e) => setFile2(e.target.files[0])} />
-        <br /><br />
-
-        <button onClick={build} disabled={loading}>
-          {loading ? "Building..." : "Build Models"}
-        </button>
         {categories && (
-          <div
-            style={{
-              display: "flex",
-              gap: "40px",
-              marginTop: "30px",
-              alignItems: "flex-start",
-              flexWrap: "wrap",
-            }}
-          >
+          <section className="metric-grid animate-in delay-2">
+            {Object.entries(categories).map(([quadrant, items], index) => (
+              <article className="metric-card" key={quadrant}>
+                <span style={{ backgroundColor: COLORS[index % COLORS.length] }} />
+                <p>{quadrant}</p>
+                <strong>{items.length}</strong>
+              </article>
+            ))}
+          </section>
+        )}
 
-            {/* ---------------- PIE CHART ---------------- */}
-
-            <div
-              style={{
-                width: "450px",
-                height: "400px",
-                background: "white",
-                padding: "20px",
-                borderRadius: "12px",
-                boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-              }}
-            >
-              <h3 style={{ textAlign: "center" }}>
-                Menu Engineering Distribution
-              </h3>
-
-              <ResponsiveContainer width="100%" height="90%">
+        {categories && (
+          <section className="analytics-grid animate-in delay-3">
+            <article className="panel chart-panel">
+              <div>
+                <p className="eyebrow">Analytics</p>
+                <h2>Menu quadrant split</h2>
+              </div>
+              <ResponsiveContainer width="100%" height={320}>
                 <PieChart>
                   <Pie
                     data={quadrantData}
                     cx="50%"
                     cy="50%"
-                    outerRadius={120}
+                    innerRadius={68}
+                    outerRadius={112}
+                    paddingAngle={5}
                     dataKey="value"
-                    label
                   >
                     {quadrantData.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={COLORS[index % COLORS.length]}
-                      />
+                      <Cell key={entry.name} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-
                   <Tooltip />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
-            </div>
+            </article>
 
-            {/* ---------------- QUADRANT DROPDOWNS ---------------- */}
-
-            <div
-              style={{
-                flex: 1,
-                display: "grid",
-                gridTemplateColumns: "repeat(2, 1fr)",
-                gap: "20px",
-              }}
-            >
-              {Object.entries(categories).map(([quadrant, items]) => (
-                <div
-                  key={quadrant}
-                  style={{
-                    background: "white",
-                    padding: "20px",
-                    borderRadius: "12px",
-                    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                  }}
-                >
-                  <h3>{quadrant}</h3>
-
+            <div className="quadrant-grid">
+              {Object.entries(categories).map(([quadrant, items], index) => (
+                <article className="panel quadrant-card" key={quadrant}>
+                  <div className="quadrant-heading">
+                    <span style={{ backgroundColor: COLORS[index % COLORS.length] }} />
+                    <h2>{quadrant}</h2>
+                  </div>
                   <details>
-                    <summary
-                      style={{
-                        cursor: "pointer",
-                        fontWeight: "bold",
-                        marginBottom: "10px",
-                      }}
-                    >
-                      View Items ({items.length})
-                    </summary>
-
-                    <div
-                      style={{
-                        maxHeight: "200px",
-                        overflowY: "auto",
-                        marginTop: "10px",
-                      }}
-                    >
-                      {items.map((item, idx) => (
-                        <div
-                          key={idx}
-                          style={{
-                            padding: "8px",
-                            borderBottom: "1px solid #eee",
-                          }}
-                        >
-                          {item}
-                        </div>
+                    <summary>View items ({items.length})</summary>
+                    <div className="item-list">
+                      {items.map((menuItem, idx) => (
+                        <p key={`${menuItem}-${idx}`}>{menuItem}</p>
                       ))}
                     </div>
                   </details>
-                </div>
+                </article>
               ))}
             </div>
-          </div>
+          </section>
         )}
 
-        <hr />
-
-        <h3>Pending Waiters</h3>
-        <button onClick={fetchPending}>Load</button>
-
-        {pending.map((w, i) => (
-          <div key={i}>
-            {w}
-            <button onClick={() => approve(w)}>Approve</button>
+        <section className="panel waiter-panel animate-in delay-4">
+          <div>
+            <p className="eyebrow">Team access</p>
+            <h2>Pending waiters</h2>
           </div>
-        ))}
-      </div>
+          <button className="secondary-button" onClick={fetchPending}>Load waiters</button>
+
+          <div className="pending-list">
+            {pending.length === 0 && <p className="muted">No pending waiters loaded yet.</p>}
+            {pending.map((waiter) => (
+              <div className="pending-row" key={waiter}>
+                <span>{waiter}</span>
+                <button className="mini-button" onClick={() => approve(waiter)}>Approve</button>
+              </div>
+            ))}
+          </div>
+        </section>
+      </main>
     );
   }
 
-  //Waiter dashboard
   if (role === "waiter") {
     return (
-      <div style={{ padding: "30px" }}>
-        <h2>Waiter Panel</h2>
-
-        <button onClick={logout}>Logout</button>
-
-        <br /><br />
+      <main className="app-shell dashboard-shell waiter-shell">
+        <header className="topbar animate-in">
+          <div>
+            <p className="eyebrow">Service assistant</p>
+            <h1>Waiter Assistant</h1>
+            <p className="muted">Search a menu item and get smart pairings for the table.</p>
+          </div>
+          <button className="ghost-button" onClick={logout}>Logout</button>
+        </header>
 
         {!categories && (
-          <p>⚠️ Admin must upload and build models first</p>
+          <section className="panel notice animate-in delay-1">
+            Admin must build models first.
+          </section>
         )}
 
-        <Select
-            options={
-              categories
-                ? Object.entries(categories).flatMap(([quadrant, items]) =>
-                    items.map((item) => ({
-                      value: item,
-                      label: item,
-                    }))
-                  )
-                : []
-            }
-            onChange={(selected) => setItem(selected.value)}
-            placeholder="🔍 Search and select item..."
-            isSearchable={true}
+        <section className="panel recommend-panel animate-in delay-1">
+          <div>
+            <p className="eyebrow">Recommendation lookup</p>
+            <h2>Search menu item</h2>
+          </div>
+
+          <Select
+            options={menuOptions}
+            onChange={(selected) => setItem(selected?.value || "")}
+            placeholder="Search and select item..."
+            isSearchable
+            styles={selectStyles}
           />
 
-        <br /><br />
-
-        <button onClick={recommend}>Recommend</button>
+          <button className="primary-button" onClick={recommend}>
+            Generate recommendations
+          </button>
+        </section>
 
         {result && (
-          <div>
-            <h3>Results</h3>
-            {result.recommendations.map((r, i) => (
-              <div key={i}>{r}</div>
-            ))}
-            <p>{result.reason}</p>
-          </div>
+          <section className="results-wrap animate-in delay-2">
+            <div>
+              <p className="eyebrow">Suggested pairings</p>
+              <h2>Recommendations</h2>
+            </div>
+
+            <div className="recommendation-list">
+              {result.recommendations.map((recommendation, index) => (
+                <article className="recommendation-card" key={`${recommendation}-${index}`}>
+                  <span>{String(index + 1).padStart(2, "0")}</span>
+                  <p>{recommendation}</p>
+                </article>
+              ))}
+            </div>
+
+            <p className="reason-pill">{result.reason}</p>
+          </section>
         )}
-      </div>
+      </main>
     );
   }
 }
