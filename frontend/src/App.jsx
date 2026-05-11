@@ -12,6 +12,7 @@ import Select from "react-select";
 import "./App.css";
 
 const COLORS = ["#1f7a68", "#e15840", "#f4b942", "#5b6ee1"];
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 function App() {
   const [role, setRole] = useState(localStorage.getItem("role"));
@@ -38,7 +39,7 @@ function App() {
     }
 
     try {
-      await axios.post("http://localhost:8000/register", null, {
+      await axios.post(`${API_URL}/register`, null, {
         params: { username, password, role: regRole },
       });
 
@@ -58,7 +59,7 @@ function App() {
     }
 
     try {
-      const res = await axios.post("http://localhost:8000/login", null, {
+      const res = await axios.post(`${API_URL}/login`, null, {
         params: { username, password },
       });
 
@@ -96,7 +97,7 @@ function App() {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-      const res = await axios.post("http://localhost:8000/build", formData, {
+      const res = await axios.post(`${API_URL}/build`, formData, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -121,7 +122,7 @@ function App() {
       setRecommendLoading(true);
       const token = localStorage.getItem("token");
       const res = await axios.get(
-        `http://localhost:8000/recommend?item=${encodeURIComponent(item)}`,
+        `${API_URL}/recommend?item=${encodeURIComponent(item)}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -138,7 +139,7 @@ function App() {
   const fetchPending = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.get("http://localhost:8000/pending-waiters", {
+      const res = await axios.get(`${API_URL}/pending-waiters`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -151,7 +152,7 @@ function App() {
   const approve = async (username) => {
     try {
       const token = localStorage.getItem("token");
-      await axios.post("http://localhost:8000/approve-waiter", null, {
+      await axios.post(`${API_URL}/approve-waiter`, null, {
         params: { username },
         headers: { Authorization: `Bearer ${token}` },
       });
