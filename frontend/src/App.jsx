@@ -18,11 +18,13 @@ function App() {
   const [file1, setFile1] = useState(null);
   const [file2, setFile2] = useState(null);
   const [item, setItem] = useState("");
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [result, setResult] = useState(null);
   const [categories, setCategories] = useState(
     JSON.parse(localStorage.getItem("categories")) || null
   );
   const [loading, setLoading] = useState(false);
+  const [recommendLoading, setRecommendLoading] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isRegister, setIsRegister] = useState(false);
@@ -74,6 +76,7 @@ function App() {
     setUsername("");
     setPassword("");
     setItem("");
+    setIsMenuOpen(false);
     setResult(null);
     setPending([]);
   };
@@ -114,14 +117,21 @@ function App() {
     }
 
     try {
+      setIsMenuOpen(false);
+      setRecommendLoading(true);
       const token = localStorage.getItem("token");
-      const res = await axios.get(`http://localhost:8000/recommend?item=${item}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await axios.get(
+        `http://localhost:8000/recommend?item=${encodeURIComponent(item)}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
       setResult(res.data);
     } catch (err) {
       alert(err.response?.data?.detail || "Error getting recommendations");
+    } finally {
+      setRecommendLoading(false);
     }
   };
 
@@ -169,6 +179,8 @@ function App() {
       )
     : [];
 
+  const selectedOption = menuOptions.find((option) => option.value === item) || null;
+
   const selectStyles = {
     control: (base, state) => ({
       ...base,
@@ -179,18 +191,25 @@ function App() {
       boxShadow: state.isFocused ? "0 0 0 4px rgba(31, 122, 104, 0.14)" : "none",
       padding: "2px 6px",
       transition: "all 180ms ease",
+      cursor: "pointer",
     }),
     menu: (base) => ({
       ...base,
       borderRadius: 16,
       overflow: "hidden",
       boxShadow: "0 20px 50px rgba(22, 35, 46, 0.16)",
+      zIndex: 30,
+    }),
+    menuPortal: (base) => ({
+      ...base,
+      zIndex: 30,
     }),
     option: (base, state) => ({
       ...base,
       background: state.isFocused ? "rgba(31, 122, 104, 0.1)" : "white",
       color: "#16232e",
       padding: "12px 14px",
+      cursor: "pointer",
     }),
   };
 
@@ -392,15 +411,28 @@ function App() {
           </div>
 
           <Select
+            className="menu-select"
+            classNamePrefix="menu-select"
             options={menuOptions}
-            onChange={(selected) => setItem(selected?.value || "")}
+            value={selectedOption}
+            onChange={(selected) => {
+              setItem(selected?.value || "");
+              setResult(null);
+              setIsMenuOpen(false);
+            }}
+            onMenuOpen={() => setIsMenuOpen(true)}
+            onMenuClose={() => setIsMenuOpen(false)}
+            menuIsOpen={isMenuOpen}
+            menuPortalTarget={document.body}
+            menuPlacement="auto"
+            maxMenuHeight={220}
             placeholder="Search and select item..."
             isSearchable
             styles={selectStyles}
           />
 
-          <button className="primary-button" onClick={recommend}>
-            Generate recommendations
+          <button className="primary-button" onClick={recommend} disabled={recommendLoading || !item}>
+            {recommendLoading ? "Finding pairings..." : "Generate recommendations"}
           </button>
         </section>
 

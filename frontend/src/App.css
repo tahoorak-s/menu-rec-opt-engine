@@ -27,6 +27,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 20px;
 }
 
 .ambient {
@@ -191,8 +192,10 @@ button {
 }
 
 .primary-button:disabled {
-  cursor: wait;
+  cursor: not-allowed;
   opacity: 0.66;
+  transform: none;
+  box-shadow: none;
 }
 
 .full-width {
@@ -408,16 +411,30 @@ summary {
 
 .recommend-panel,
 .results-wrap {
-  width: min(720px, 100%);
+  width: min(880px, 100%);
 }
 
 .recommend-panel {
   display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
   gap: 18px;
 }
 
+.recommend-panel > div,
+.recommend-panel .menu-select {
+  grid-column: 1 / -1;
+}
+
+.recommend-panel .primary-button {
+  grid-column: 1 / -1;
+  width: fit-content;
+  min-width: 240px;
+}
+
 .results-wrap {
-  margin-top: 24px;
+  margin-top: 0;
+  padding-bottom: 48px;
 }
 
 .recommendation-list {
@@ -430,7 +447,7 @@ summary {
   display: flex;
   align-items: center;
   gap: 14px;
-  border-radius: 18px;
+  border-radius: 8px;
   padding: 16px;
   animation: slideUp 420ms ease both;
 }
@@ -440,7 +457,7 @@ summary {
   height: 44px;
   display: grid;
   place-items: center;
-  border-radius: 14px;
+  border-radius: 8px;
   color: white;
   font-weight: 900;
   background: #1f7a68;
@@ -456,10 +473,24 @@ summary {
   display: inline-flex;
   margin: 18px 0 0;
   padding: 12px 16px;
-  border-radius: 999px;
+  border-radius: 8px;
   color: white;
   font-weight: 800;
   background: linear-gradient(135deg, #e15840, #244f8f);
+}
+
+.menu-select__menu-list {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(31, 122, 104, 0.52) transparent;
+}
+
+.menu-select__menu-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.menu-select__menu-list::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(31, 122, 104, 0.52);
 }
 
 .animate-in {
@@ -554,5 +585,10 @@ summary {
   .pending-row {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .recommend-panel .primary-button {
+    width: 100%;
+    min-width: 0;
   }
 }
