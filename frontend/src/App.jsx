@@ -2,7 +2,7 @@ import { useState } from "react";
 import axios from "axios";
 
 function App() {
-  const [role, setRole] = useState(null);
+  const [role, setRole] = useState(localStorage.getItem("role"));
   const [file1, setFile1] = useState(null);
   const [file2, setFile2] = useState(null);
   const [item, setItem] = useState("");
@@ -65,8 +65,7 @@ function App() {
 
   //logout
   const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("role");
+    localStorage.clear();
 
     setRole(null);
     setUsername("");
