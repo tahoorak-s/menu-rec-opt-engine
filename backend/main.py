@@ -150,17 +150,39 @@ def approve_waiter(username: str, user=Depends(get_current_user)):
     return {"message": "Waiter approved"}
 
 #here we build the ML and MBA models which will be used for the recommendation engine
+def read_model_files(transactions_file, items_file=None):
+    transaction_sheets = pd.read_excel(transactions_file, sheet_name=None)
+
+    if "Transactions" in transaction_sheets:
+        df = transaction_sheets["Transactions"]
+    else:
+        df = next(iter(transaction_sheets.values()))
+
+    if items_file is not None:
+        item_sheets = pd.read_excel(items_file, sheet_name=None)
+    else:
+        item_sheets = transaction_sheets
+
+    if "Aggregate_Menu" in item_sheets:
+        item_df = item_sheets["Aggregate_Menu"]
+    elif len(item_sheets) > 1:
+        item_df = list(item_sheets.values())[1]
+    else:
+        item_df = next(iter(item_sheets.values()))
+
+    return df, item_df
+
+
 @app.post("/build")
 async def build(
     transactions: UploadFile = File(...),
-    items: UploadFile = File(...),
+    items: UploadFile | None = File(None),
     user=Depends(get_current_user)
 ):
     if user["role"] != "admin":
         raise HTTPException(status_code=403, detail="Admins only")
 
-    df = pd.read_excel(transactions.file)
-    item_df = pd.read_excel(items.file)
+    df, item_df = read_model_files(transactions.file, items.file if items else None)
 
     item_df = apply_menu_engineering(item_df)
 

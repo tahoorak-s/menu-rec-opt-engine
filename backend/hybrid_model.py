@@ -17,4 +17,4 @@ def final_recommend(item, rules, hierarchy, item_lookup, item_stats):
         by="Qty_Sold", ascending=False
     )["Item_Name"].tolist()
 
-    return fallback[:5], "Based on popularity"
+    return fallback[:5], "Based on customer purchase patterns"

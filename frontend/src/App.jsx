@@ -79,14 +79,16 @@ function App() {
   };
 
   const build = async () => {
-    if (!file1 || !file2) {
-      alert("Upload both files first");
+    if (!file1) {
+      alert("Upload a transactions workbook first");
       return;
     }
 
     const formData = new FormData();
     formData.append("transactions", file1);
-    formData.append("items", file2);
+    if (file2) {
+      formData.append("items", file2);
+    }
 
     try {
       setLoading(true);
@@ -131,7 +133,7 @@ function App() {
       });
 
       setPending(res.data.pending);
-    } catch (err) {
+    } catch {
       alert("Error fetching waiters");
     }
   };
@@ -145,7 +147,7 @@ function App() {
       });
 
       fetchPending();
-    } catch (err) {
+    } catch {
       alert("Error approving waiter");
     }
   };
@@ -268,13 +270,13 @@ function App() {
           <div className="upload-grid">
             <label className="file-tile">
               <span>Transactions file</span>
-              <strong>{file1?.name || "Choose CSV"}</strong>
-              <input type="file" onChange={(e) => setFile1(e.target.files[0])} />
+              <strong>{file1?.name || "Choose Excel workbook"}</strong>
+              <input type="file" accept=".xlsx,.xls,.csv" onChange={(e) => setFile1(e.target.files[0])} />
             </label>
             <label className="file-tile">
               <span>Items file</span>
-              <strong>{file2?.name || "Choose CSV"}</strong>
-              <input type="file" onChange={(e) => setFile2(e.target.files[0])} />
+              <strong>{file2?.name || "Optional separate file"}</strong>
+              <input type="file" accept=".xlsx,.xls,.csv" onChange={(e) => setFile2(e.target.files[0])} />
             </label>
           </div>
 

@@ -4,6 +4,7 @@ def build_hierarchy(item_stats):
     "item": "Item_Name",
     "quantity": "Qty_Sold",
     "revenue": "Revenue",
+    "category_of_item": "Department",
     "DEPARTMENT": "Department",
     "category": "Quadrant"   # 🔥 key fix
 })

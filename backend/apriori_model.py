@@ -8,7 +8,7 @@ def build_rules(df):
     basket = df.groupby(['Order_ID', 'Item_Name'])['Item_Name'] \
                .count().unstack().fillna(0)
 
-    basket = (basket > 0).astype(int)
+    basket = basket > 0
 
     frequent_itemsets = apriori(basket, min_support=0.01, use_colnames=True)
 
