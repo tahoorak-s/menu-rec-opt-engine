@@ -1,5 +1,14 @@
 import { useState } from "react";
 import axios from "axios";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
+import Select from "react-select";
 
 function App() {
   const [role, setRole] = useState(localStorage.getItem("role"));
@@ -7,7 +16,7 @@ function App() {
   const [file2, setFile2] = useState(null);
   const [item, setItem] = useState("");
   const [result, setResult] = useState(null);
-  const [categories, setCategories] = useState(null);
+  const [categories, setCategories] = useState(JSON.parse(localStorage.getItem("categories")) || null);
   const [loading, setLoading] = useState(false);
 
   const [username, setUsername] = useState("");
@@ -71,7 +80,6 @@ function App() {
     setUsername("");
     setPassword("");
     setItem("");
-    setCategories(null);
     setResult(null);
     setPending([]);
   };
@@ -91,7 +99,6 @@ function App() {
       setLoading(true);
 
       const token = localStorage.getItem("token");
-
       const res = await axios.post(
         "http://localhost:8000/build",
         formData,
@@ -103,6 +110,10 @@ function App() {
       );
 
       setCategories(res.data.categories);
+      localStorage.setItem(
+        "categories",
+        JSON.stringify(res.data.categories)
+      );
       alert("Models Built!");
     } catch (err) {
       alert(err.response?.data?.detail || "Error building models");
@@ -178,6 +189,24 @@ function App() {
     }
   };
 
+  const quadrantData = categories
+  ? Object.entries(categories).map(([key, value]) => ({
+      name: key,
+      value: value.length,
+    }))
+  : [];
+
+  const COLORS = ["#4CAF50", "#2196F3", "#FF9800", "#F44336"];
+
+  const itemOptions = categories
+  ? Object.entries(categories).flatMap(([quadrant, items]) =>
+      items.map((item) => ({
+        value: item,
+        label: item,
+      }))
+    )
+  : [];
+
   //login/registration page
   if (!role) {
     return (
@@ -246,15 +275,113 @@ function App() {
         <button onClick={build} disabled={loading}>
           {loading ? "Building..." : "Build Models"}
         </button>
-
         {categories && (
-          <div>
-            <h3>Menu Engineering Quadrant Analysis</h3>
-            {Object.entries(categories).map(([k, v]) => (
-              <div key={k}>
-                <b>{k}</b>: {v.join(", ")}
-              </div>
-            ))}
+          <div
+            style={{
+              display: "flex",
+              gap: "40px",
+              marginTop: "30px",
+              alignItems: "flex-start",
+              flexWrap: "wrap",
+            }}
+          >
+
+            {/* ---------------- PIE CHART ---------------- */}
+
+            <div
+              style={{
+                width: "450px",
+                height: "400px",
+                background: "white",
+                padding: "20px",
+                borderRadius: "12px",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+              }}
+            >
+              <h3 style={{ textAlign: "center" }}>
+                Menu Engineering Distribution
+              </h3>
+
+              <ResponsiveContainer width="100%" height="90%">
+                <PieChart>
+                  <Pie
+                    data={quadrantData}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={120}
+                    dataKey="value"
+                    label
+                  >
+                    {quadrantData.map((entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={COLORS[index % COLORS.length]}
+                      />
+                    ))}
+                  </Pie>
+
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* ---------------- QUADRANT DROPDOWNS ---------------- */}
+
+            <div
+              style={{
+                flex: 1,
+                display: "grid",
+                gridTemplateColumns: "repeat(2, 1fr)",
+                gap: "20px",
+              }}
+            >
+              {Object.entries(categories).map(([quadrant, items]) => (
+                <div
+                  key={quadrant}
+                  style={{
+                    background: "white",
+                    padding: "20px",
+                    borderRadius: "12px",
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                  }}
+                >
+                  <h3>{quadrant}</h3>
+
+                  <details>
+                    <summary
+                      style={{
+                        cursor: "pointer",
+                        fontWeight: "bold",
+                        marginBottom: "10px",
+                      }}
+                    >
+                      View Items ({items.length})
+                    </summary>
+
+                    <div
+                      style={{
+                        maxHeight: "200px",
+                        overflowY: "auto",
+                        marginTop: "10px",
+                      }}
+                    >
+                      {items.map((item, idx) => (
+                        <div
+                          key={idx}
+                          style={{
+                            padding: "8px",
+                            borderBottom: "1px solid #eee",
+                          }}
+                        >
+                          {item}
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
@@ -283,11 +410,25 @@ function App() {
 
         <br /><br />
 
-        <input
-          placeholder="Enter item"
-          value={item}
-          onChange={(e) => setItem(e.target.value)}
-        />
+        {!categories && (
+          <p>⚠️ Admin must upload and build models first</p>
+        )}
+
+        <Select
+            options={
+              categories
+                ? Object.entries(categories).flatMap(([quadrant, items]) =>
+                    items.map((item) => ({
+                      value: item,
+                      label: item,
+                    }))
+                  )
+                : []
+            }
+            onChange={(selected) => setItem(selected.value)}
+            placeholder="🔍 Search and select item..."
+            isSearchable={true}
+          />
 
         <br /><br />
 
